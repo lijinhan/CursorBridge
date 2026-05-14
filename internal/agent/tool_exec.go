@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"strings"
 	"time"
 
@@ -167,7 +167,7 @@ func registerExecIDAlias(execID string, seq uint32, toolCallID string) {
 	DefaultDeps.ExecIDAlias[execID] = aliasEntry{callID: toolCallID, createdAt: now}
 	DefaultDeps.SeqAlias[seq] = aliasEntry{callID: toolCallID, createdAt: now}
 	DefaultDeps.PendingMu.Unlock()
-	debuglog.Printf("[TOOL-EXEC] registerExecIDAlias: execID=%s seq=%d toolCallID=%s", execID, seq, toolCallID)
+	logutil.Debug("tool_exec: registerExecIDAlias", "execID", execID, "seq", seq, "toolCallID", toolCallID)
 }
 
 func registerToolWait(toolCallID string) chan *toolResultEnvelope {
@@ -185,24 +185,24 @@ func deliverToolResult(id string, env *toolResultEnvelope) {
 	if pr == nil {
 		if ae, ok := DefaultDeps.ExecIDAlias[id]; ok {
 			pr = DefaultDeps.Pending[ae.callID]
-			debuglog.Printf("[TOOL-EXEC] deliverToolResult: id=%s resolved via execIDAlias to callID=%s, found=%v", id, ae.callID, pr != nil)
+			logutil.Debug("tool_exec: deliverToolResult resolved via alias", "id", id, "callID", ae.callID, "found", pr != nil)
 			delete(DefaultDeps.Pending, ae.callID)
 			delete(DefaultDeps.ExecIDAlias, id)
 		}
 	} else {
-		debuglog.Printf("[TOOL-EXEC] deliverToolResult: id=%s found directly in pending, resultLen=%d hasError=%v", id, len(env.ResultJSON), env.Error != "")
+		logutil.Debug("tool_exec: deliverToolResult found in pending", "id", id, "resultLen", len(env.ResultJSON), "hasError", env.Error != "")
 		delete(DefaultDeps.Pending, id)
 	}
 	DefaultDeps.PendingMu.Unlock()
 	if pr != nil {
 		select {
 		case pr.ch <- env:
-			debuglog.Printf("[TOOL-EXEC] deliverToolResult: delivered result to waiter id=%s", id)
+			logutil.Debug("tool_exec: deliverToolResult delivered to waiter", "id", id)
 		default:
-			debuglog.Printf("[TOOL-EXEC] deliverToolResult: waiter id=%s channel full, dropping result", id)
+			logutil.Warn("tool_exec: deliverToolResult waiter channel full, dropping result", "id", id)
 		}
 	} else {
-		debuglog.Printf("[TOOL-EXEC] deliverToolResult: NO WAITER for id=%s — result dropped! pendingCount=%d", id, len(DefaultDeps.Pending))
+		logutil.Warn("tool_exec: deliverToolResult NO WAITER, result dropped", "id", id, "pendingCount", len(DefaultDeps.Pending))
 	}
 }
 
@@ -599,7 +599,7 @@ func waitForToolResult(ctx context.Context, ch chan *toolResultEnvelope, timeout
 	for {
 		remaining := time.Until(deadline)
 		if remaining <= 0 {
-			debuglog.Printf("[TOOL-EXEC] waitForToolResult: TIMED OUT after %s", timeout.String())
+			logutil.Warn("tool_exec: waitForToolResult timed out", "timeout", timeout.String())
 			return &toolResultEnvelope{Error: "tool execution timed out after " + timeout.String()}
 		}
 		iterWait := remaining
@@ -608,14 +608,14 @@ func waitForToolResult(ctx context.Context, ch chan *toolResultEnvelope, timeout
 		}
 		select {
 		case env := <-ch:
-			debuglog.Printf("[TOOL-EXEC] waitForToolResult: received result, resultLen=%d hasError=%v", len(env.ResultJSON), env.Error != "")
+			logutil.Debug("tool_exec: waitForToolResult received result", "resultLen", len(env.ResultJSON), "hasError", env.Error != "")
 			return env
 		case <-ctx.Done():
-			debuglog.Printf("[TOOL-EXEC] waitForToolResult: context cancelled, aborting wait")
+			logutil.Warn("tool_exec: waitForToolResult context cancelled, aborting wait")
 			return &toolResultEnvelope{Error: "tool execution cancelled: " + ctx.Err().Error()}
 		case <-time.After(iterWait):
 			if brokenFn != nil && brokenFn() {
-				debuglog.Printf("[TOOL-EXEC] waitForToolResult: client disconnected, aborting wait")
+				logutil.Warn("tool_exec: waitForToolResult client disconnected, aborting wait")
 				return &toolResultEnvelope{Error: "client disconnected during tool execution"}
 			}
 		}

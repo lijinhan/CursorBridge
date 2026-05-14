@@ -8,7 +8,7 @@ import (
 
 	aiserverv1 "cursorbridge/internal/protocodec/gen/aiserver/v1"
 
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"cursorbridge/internal/strutil"
 )
 
@@ -33,8 +33,7 @@ func setupRunSSESession(
 	requestID := bid.GetRequestId()
 	sess := WaitForSession(ctx, requestID)
 	if sess != nil {
-		debuglog.Printf("[RUNSSE] requestID=%s conversationID=%s userText=%q mode=%v",
-			requestID, sess.ConversationID, strutil.Truncate(sess.UserText, 80), sess.Mode)
+			logutil.Debug("setup: session resolved", "requestID", requestID, "conversationID", sess.ConversationID, "userText", strutil.Truncate(sess.UserText, 80), "mode", sess.Mode)
 	}
 	// When the session has a ConversationID but no UserText (continuation
 	// round or prewarm), try to fill UserText from on-disk history.
@@ -43,7 +42,7 @@ func setupRunSSESession(
 			last := turns[len(turns)-1]
 			if last.User != "" {
 				sess.UserText = last.User
-				debuglog.Printf("[RUNSSE] filled UserText from history conversationID=%s", sess.ConversationID)
+				logutil.Debug("setup: filled UserText from history", "conversationID", sess.ConversationID)
 				PutSession(sess)
 			}
 		}

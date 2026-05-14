@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"cursorbridge/internal/bridge"
+	"cursorbridge/internal/logutil"
 
 	// Side-effect imports: each gen package's init() registers its message
 	// types in the global proto registry so that protocodec can look up
@@ -33,6 +34,10 @@ func init() {
 }
 
 func main() {
+	if err := logutil.Init("info"); err != nil {
+		log.Printf("logutil init: %v", err)
+	}
+	defer logutil.Close()
 	proxySvc, err := bridge.NewProxyService()
 	if err != nil {
 		log.Fatalf("failed to init proxy service: %v", err)

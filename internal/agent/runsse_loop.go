@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"cursorbridge/internal/strutil"
 )
 
@@ -31,7 +31,7 @@ func runStreamingLoop(
 		}
 		// Check client disconnect.
 		if setup.w.Broken() {
-			debuglog.Printf("[RUNSSE] client disconnected, aborting at round %d", round)
+			logutil.Debug("client disconnected, aborting at round", "round", round)
 			persistPartialTurn(setup.sess, setup.requestID, setup.startedAt, messages, initialLen,
 				setup.model, setup.baseURL, &assistantBuf, lastResult, promptTokens, completionTokens)
 			DropSession(setup.requestID)
@@ -90,7 +90,7 @@ func runStreamingLoop(
 		// Handle stream errors (including context overflow → compaction).
 		if streamErr != nil {
 			if isContextOverflowError(streamErr) {
-				debuglog.Printf("[COMPACTION] context overflow: %v", streamErr)
+				logutil.Warn("context overflow", "error", streamErr)
 				if art, ok := runCompaction(ctx, setup, messages, initialLen); ok {
 					_ = art
 					messages = buildMessageHistory(setup.sess)
@@ -99,7 +99,7 @@ func runStreamingLoop(
 					continue
 				}
 			}
-			debuglog.Printf("[RUNSSE] stream error: %v", streamErr)
+			logutil.Warn("stream error", "error", streamErr)
 			persistPartialTurn(setup.sess, setup.requestID, setup.startedAt, messages, initialLen,
 				setup.model, setup.baseURL, &assistantBuf, lastResult, promptTokens, completionTokens)
 			DropSession(setup.requestID)
@@ -122,7 +122,7 @@ func runStreamingLoop(
 		// No tool calls: done.
 		if len(result.ToolCalls) == 0 {
 			if err := writeTurnEndedFrame(setup.w); err != nil {
-				debuglog.Printf("[RUNSSE] write error: %v", err)
+				logutil.Warn("write error", "error", err)
 				persistPartialTurn(setup.sess, setup.requestID, setup.startedAt, messages, initialLen,
 					setup.model, setup.baseURL, &assistantBuf, lastResult, promptTokens, completionTokens)
 				DropSession(setup.requestID)

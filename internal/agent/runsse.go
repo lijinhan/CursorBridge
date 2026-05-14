@@ -9,7 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"cursorbridge/internal/strutil"
 
 	aiserverv1 "cursorbridge/internal/protocodec/gen/aiserver/v1"
@@ -274,7 +274,7 @@ func persistPartialTurn(
 	hasToolHistory := len(storedMessages) > 0
 	hasMeaningfulText := len(assistantText) >= 100 || (len(assistantText) > 0 && hasToolHistory)
 	if !hasMeaningfulText && !hasToolHistory {
-		debuglog.Printf("[RUNSSE] persistPartialTurn: SKIPPING empty turn")
+		logutil.Debug("persistPartialTurn: skipping empty turn")
 		return
 	}
 	if assistantText == "" && lastResult != nil && len(lastResult.ToolCalls) > 0 {
@@ -288,7 +288,7 @@ func persistPartialTurn(
 		assistantText = "[partial turn: disconnected]"
 	}
 	RecordTurn(sess.ConversationID, requestID, sess.UserText, assistantText, modeString(sess.Mode), nil, storedMessages)
-	debuglog.Printf("[RUNSSE] persistPartialTurn: saved conversationID=%s requestID=%s", sess.ConversationID, requestID)
+	logutil.Debug("persistPartialTurn: saved", "conversationID", sess.ConversationID, "requestID", requestID)
 }
 
 // writeEndStreamError emits the Connect END-STREAM frame with an error payload.

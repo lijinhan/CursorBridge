@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"strings"
 	"time"
 
@@ -168,14 +168,13 @@ func routeExecClientResult(acm *agentv1.AgentClientMessage) {
 	// the log with hundreds of Stdout/Stderr lines per command.
 	isShell := ecm.GetShellStream() != nil
 	if !isShell {
-		debuglog.Printf("[TOOL-EXEC] routeExecClientResult: seq=%d execID=%s callID=%s hasReadResult=%v hasLsResult=%v hasGrepResult=%v hasWriteResult=%v hasDeleteResult=%v hasMcpResult=%v",
-			seq, ecm.GetExecId(), callID,
-			ecm.GetReadResult() != nil,
-			ecm.GetLsResult() != nil,
-			ecm.GetGrepResult() != nil,
-			ecm.GetWriteResult() != nil,
-			ecm.GetDeleteResult() != nil,
-			ecm.GetMcpResult() != nil)
+		logutil.Debug("tool_exec: routeExecClientResult", "seq", seq, "execID", ecm.GetExecId(), "callID", callID,
+			"hasReadResult", ecm.GetReadResult() != nil,
+			"hasLsResult", ecm.GetLsResult() != nil,
+			"hasGrepResult", ecm.GetGrepResult() != nil,
+			"hasWriteResult", ecm.GetWriteResult() != nil,
+			"hasDeleteResult", ecm.GetDeleteResult() != nil,
+			"hasMcpResult", ecm.GetMcpResult() != nil)
 	}
 
 	// Shell streaming: accumulate chunks, deliver on Exit.
@@ -198,7 +197,7 @@ func routeExecClientResult(acm *agentv1.AgentClientMessage) {
 		switch evt := ss.GetEvent().(type) {
 		case *agentv1.ShellStream_Start:
 			state.Started = true
-			debuglog.Printf("[TOOL-EXEC] ShellStream Start: seq=%d callID=%s", seq, callID)
+			logutil.Debug("tool_exec: ShellStream Start", "seq", seq, "callID", callID)
 			publishInteractionUpdate(&aiserverv1.InteractionUpdate{Message: &aiserverv1.InteractionUpdate_ShellOutputDelta{ShellOutputDelta: &aiserverv1.ShellOutputDeltaUpdate{Event: &aiserverv1.ShellOutputDeltaUpdate_Start{Start: &aiserverv1.ShellStreamStart{}}}}})
 		case *agentv1.ShellStream_Stdout:
 			state.Stdout = append(state.Stdout, []byte(evt.Stdout.GetData())...)
@@ -210,7 +209,7 @@ func routeExecClientResult(acm *agentv1.AgentClientMessage) {
 			state.Exited = true
 			state.ExitCode = evt.Exit.GetCode()
 			state.Cwd = evt.Exit.GetCwd()
-			debuglog.Printf("[TOOL-EXEC] ShellStream Exit: seq=%d callID=%s exitCode=%d cwd=%s stdoutLen=%d stderrLen=%d", seq, callID, state.ExitCode, state.Cwd, len(state.Stdout), len(state.Stderr))
+			logutil.Debug("tool_exec: ShellStream Exit", "seq", seq, "callID", callID, "exitCode", state.ExitCode, "cwd", state.Cwd, "stdoutLen", len(state.Stdout), "stderrLen", len(state.Stderr))
 			publishInteractionUpdate(&aiserverv1.InteractionUpdate{Message: &aiserverv1.InteractionUpdate_ShellOutputDelta{ShellOutputDelta: &aiserverv1.ShellOutputDeltaUpdate{Event: &aiserverv1.ShellOutputDeltaUpdate_Exit{Exit: &aiserverv1.ShellStreamExit{Code: evt.Exit.GetCode(), Cwd: evt.Exit.GetCwd()}}}}})
 		}
 		if state.Exited && callID != "" {
@@ -239,14 +238,13 @@ func routeExecClientResult(acm *agentv1.AgentClientMessage) {
 		return
 	}
 	env := &toolResultEnvelope{ResultJSON: string(body), ExecClient: ecm}
-	debuglog.Printf("[TOOL-EXEC] routeExecClientResult non-shell: seq=%d execID=%s callID=%s resultLen=%d hasReadResult=%v hasLsResult=%v hasGrepResult=%v hasWriteResult=%v hasDeleteResult=%v hasMcpResult=%v",
-		seq, ecm.GetExecId(), callID, len(body),
-		ecm.GetReadResult() != nil,
-		ecm.GetLsResult() != nil,
-		ecm.GetGrepResult() != nil,
-		ecm.GetWriteResult() != nil,
-		ecm.GetDeleteResult() != nil,
-		ecm.GetMcpResult() != nil)
+	logutil.Debug("tool_exec: routeExecClientResult non-shell", "seq", seq, "execID", ecm.GetExecId(), "callID", callID, "resultLen", len(body),
+		"hasReadResult", ecm.GetReadResult() != nil,
+		"hasLsResult", ecm.GetLsResult() != nil,
+		"hasGrepResult", ecm.GetGrepResult() != nil,
+		"hasWriteResult", ecm.GetWriteResult() != nil,
+		"hasDeleteResult", ecm.GetDeleteResult() != nil,
+		"hasMcpResult", ecm.GetMcpResult() != nil)
 	if id := ecm.GetExecId(); id != "" {
 		deliverToolResult(id, env)
 		return
@@ -267,10 +265,10 @@ func routeExecClientResult(acm *agentv1.AgentClientMessage) {
 		count++
 	}
 	DefaultDeps.PendingMu.Unlock()
-	debuglog.Printf("[TOOL-EXEC] routeExecClientResult fallback: pendingCount=%d only=%s", count, only)
+	logutil.Debug("tool_exec: routeExecClientResult fallback", "pendingCount", count, "only", only)
 	if count == 1 {
 		deliverToolResult(only, env)
 	} else {
-		debuglog.Printf("[TOOL-EXEC] routeExecClientResult: DROPPING result — cannot resolve target (pendingCount=%d, seq=%d, execID=%s, callID=%s)", count, seq, ecm.GetExecId(), callID)
+		logutil.Warn("tool_exec: DROPPING result — cannot resolve target", "pendingCount", count, "seq", seq, "execID", ecm.GetExecId(), "callID", callID)
 	}
 }

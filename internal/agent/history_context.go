@@ -3,7 +3,7 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"cursorbridge/internal/strutil"
 	"strings"
 	"time"
@@ -356,11 +356,11 @@ func appendProjectTree(b *strings.Builder, sess *Session) {
 func appendCursorRules(b *strings.Builder, sess *Session) {
 	rc := requestContextFor(sess)
 	if rc == nil {
-		debuglog.Printf("[DEBUG] appendCursorRules: requestContext is nil")
+		logutil.Debug("appendCursorRules: requestContext is nil")
 		return
 	}
 	rules := rc.GetRules()
-	debuglog.Printf("[DEBUG] appendCursorRules: rules count=%d", len(rules))
+	logutil.Debug("appendCursorRules: rules count", "count", len(rules))
 	if len(rules) == 0 {
 		return
 	}

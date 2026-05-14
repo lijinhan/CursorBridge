@@ -6,15 +6,14 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"log"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"cursorbridge/internal/agent"
 	"cursorbridge/internal/certs"
+	"cursorbridge/internal/logutil"
 	"cursorbridge/internal/relay"
 
 	"github.com/elazarl/goproxy"
@@ -67,7 +66,7 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 
 	p := goproxy.NewProxyHttpServer()
 	p.Verbose = true
-	p.Logger = log.New(os.Stderr, "[goproxy] ", log.LstdFlags)
+	p.Logger = logutil.GoproxyLogger{}
 	p.CertStore = certs.NewCertCache()
 	p.OnRequest().HandleConnect(goproxy.AlwaysMitm)
 
@@ -260,7 +259,7 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 			// Cursor to show a login prompt. Instead we mock success
 			// with an empty protobuf body so Cursor considers itself
 			// "connected" and never forces re-login.
-			log.Printf("[MITM] mock-200: %s%s", host, path)
+			logutil.Info("mock-200", "host", host, "path", path)
 			return req, mockProto(req, nil)
 		}
 		if isAuthHost {
@@ -272,7 +271,7 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 		}
 		// Block known telemetry/analytics hosts.
 		if _, blocked := blockedTelemetryHosts[host]; blocked {
-			log.Printf("[MITM] blocked telemetry: %s%s", host, path)
+			logutil.Info("blocked telemetry", "host", host, "path", path)
 			return req, mock404(req)
 		}
 		// Block ALL remaining *.cursor.sh subdomains — nothing should
@@ -283,7 +282,7 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 			hostNoPort = host[:idx]
 		}
 		if strings.HasSuffix(hostNoPort, ".cursor.sh") || hostNoPort == "cursor.sh" {
-			log.Printf("[MITM] blocked cursor domain: %s%s", host, path)
+			logutil.Info("blocked cursor domain", "host", host, "path", path)
 			return req, mock404(req)
 		}
 		return req, nil

@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
 	"cursorbridge/internal/knowledgebase"
+	"cursorbridge/internal/logutil"
 	aiserverv1 "cursorbridge/internal/protocodec/gen/aiserver/v1"
 
 	"google.golang.org/protobuf/proto"
@@ -55,7 +55,7 @@ func handleKnowledgeBase(req *http.Request, path string) *http.Response {
 func handleKBAdd(body []byte, contentType string) []byte {
 	addReq := &aiserverv1.KnowledgeBaseAddRequest{}
 	if err := decodeUnaryMsg(body, contentType, addReq); err != nil {
-		log.Printf("[KB] decode add request: %v", err)
+		logutil.Warn("KB decode add request", "error", err)
 		return nil
 	}
 	id := knowledgebase.Add(addReq.GetKnowledge(), addReq.GetTitle(), addReq.GetGitOrigin())
