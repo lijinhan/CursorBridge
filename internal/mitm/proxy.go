@@ -85,6 +85,7 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 	agentAPI2Paths := map[string]struct{}{
 		"/aiserver.v1.BidiService/BidiAppend": {},
 		"/agent.v1.AgentService/RunSSE":       {},
+		"/aiserver.v1.AiService/GetChatTitle":                {},
 		"/aiserver.v1.AiService/WriteGitCommitMessage":         {},
 		"/aiserver.v1.AiService/StreamBugBotAgenticSSE":        {},
 		"/aiserver.v1.BackgroundComposerService/AddAsyncFollowupBackgroundComposer": {},
@@ -212,6 +213,9 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 				if path == "/agent.v1.AgentService/RunSSE" {
 					return req, handleRunSSE(req, resolver)
 				}
+				if path == "/aiserver.v1.AiService/GetChatTitle" {
+					return req, handleGetChatTitle(req, resolver, selectedModel("chat"))
+				}
 				if path == "/aiserver.v1.AiService/WriteGitCommitMessage" {
 					return req, handleWriteGitCommitMessage(req, resolver, selectedModel("commit"))
 				}
@@ -325,4 +329,3 @@ func (s *Server) Stop(ctx context.Context) error {
 	defer cancel()
 	return s.srv.Shutdown(ctx)
 }
-
