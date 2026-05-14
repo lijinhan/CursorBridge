@@ -193,3 +193,16 @@ func handleBackgroundComposerStatus(req *http.Request) *http.Response {
 	}
 	return &http.Response{Status: http.StatusText(res.Status), StatusCode: res.Status, Proto: req.Proto, ProtoMajor: req.ProtoMajor, ProtoMinor: req.ProtoMinor, Body: io.NopCloser(bytes.NewReader(res.Body)), ContentLength: int64(len(res.Body)), Header: hdr, Request: req}
 }
+
+func handleGetCompletion(req *http.Request, resolver agent.AdapterResolver, selectedModel string) *http.Response {
+	body, err := readDecodedBody(req)
+	if err != nil {
+		return makeJSONResp(req, http.StatusBadRequest, `{"code":"invalid_argument","message":"read body: `+err.Error()+`"}`)
+	}
+	res := agent.HandleGetCompletion(req.Context(), body, req.Header.Get("Content-Type"), resolver, selectedModel)
+	hdr := http.Header{}
+	if res.ContentType != "" {
+		hdr.Set("Content-Type", res.ContentType)
+	}
+	return &http.Response{Status: http.StatusText(res.Status), StatusCode: res.Status, Proto: req.Proto, ProtoMajor: req.ProtoMajor, ProtoMinor: req.ProtoMinor, Body: io.NopCloser(bytes.NewReader(res.Body)), ContentLength: int64(len(res.Body)), Header: hdr, Request: req}
+}

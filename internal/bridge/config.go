@@ -103,6 +103,8 @@ func selectedModelFor(cfgDir string, purpose string) string {
 		return strings.TrimSpace(c.CommitModelID)
 	case "review":
 		return strings.TrimSpace(c.ReviewModelID)
+	case "completion":
+		return strings.TrimSpace(c.CompletionModelID)
 	default:
 		return ""
 	}

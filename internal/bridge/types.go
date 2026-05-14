@@ -94,8 +94,9 @@ type UserConfig struct {
 	BaseURL       string               `json:"baseURL"`
 	ModelAdapters []ModelAdapterConfig `json:"modelAdapters"`
 	ActiveModelID string               `json:"activeModelID,omitempty"`
-	CommitModelID string               `json:"commitModelID,omitempty"`
-	ReviewModelID string               `json:"reviewModelID,omitempty"`
+	CommitModelID     string `json:"commitModelID,omitempty"`
+	ReviewModelID     string `json:"reviewModelID,omitempty"`
+	CompletionModelID string `json:"completionModelID,omitempty"`
 	// CloseAction remembers what the user picked in the "Quit or minimize
 	// to tray?" dialog. Empty = never answered, show the dialog on close.
 	// "quit" = shut the proxy down and exit. "tray" = hide to system tray.
