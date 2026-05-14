@@ -198,6 +198,12 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 					return req, mockProto(req, body)
 				}
 			}
+			// 1.5 Structured synthetic paths → return typed proto responses
+			// (IsConnected, GetMe, GetEmail, etc.) These need real fields
+			// rather than empty bodies so Cursor's UI renders correctly.
+			if resp := handleSyntheticPath(req, path); resp != nil {
+				return req, resp
+			}
 			// 2. Agent-handled paths → BYOK layer processes them
 			if _, ok := agentAPI2Paths[path]; ok {
 				if path == "/aiserver.v1.BidiService/BidiAppend" {
