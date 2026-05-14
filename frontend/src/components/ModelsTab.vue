@@ -51,7 +51,7 @@ function openEditor(i: number) {
       >
         <OpenAIMark class="prov-logo" />
         <span>OpenAI</span>
-        <span class="prov-count">{{ store.openAICount }}</span>
+        <span class="prov-count">{{ store.adapterCountByType('openai') }}</span>
       </button>
       <button
         :class="['prov', store.providerTab === 'anthropic' ? 'prov-anthropic' : '']"
@@ -59,7 +59,7 @@ function openEditor(i: number) {
       >
         <AnthropicMark class="prov-logo" />
         <span>Anthropic</span>
-        <span class="prov-count">{{ store.anthropicCount }}</span>
+        <span class="prov-count">{{ store.adapterCountByType('anthropic') }}</span>
       </button>
 
       <span class="tab-spacer" />
