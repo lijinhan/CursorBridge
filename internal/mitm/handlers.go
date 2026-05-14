@@ -43,7 +43,7 @@ func handleRunSSE(req *http.Request, resolver agent.AdapterResolver) *http.Respo
 	pr, pw := io.Pipe()
 	go func() {
 		defer pw.Close()
-		agent.HandleRunSSE(req.Context(), body, req.Header.Get("Content-Type"), pw, resolver)
+		agent.HandleRunSSE(req.Context(), body, req.Header.Get("Content-Type"), pw, resolver, agent.DefaultDeps)
 	}()
 	hdr := http.Header{}
 	for k, vs := range agent.RunSSEHeaders {

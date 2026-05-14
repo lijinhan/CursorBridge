@@ -41,7 +41,7 @@ func buildMessageHistory(sess *Session) []openAIMessage {
 	// Retrieve compaction state for this conversation — if a summary exists
 	// from a prior compaction, inject it as a system-role context block that
 	// replaces the old turns the summary already covers.
-	compState := getCompactionState(sess.ConversationID)
+	compState := getCompactionState(DefaultDeps, sess.ConversationID)
 	compState.mu.RLock()
 	existingSummary := compState.CurrentSummary
 	compState.mu.RUnlock()

@@ -193,9 +193,10 @@ func HandleRunSSE(
 	contentType string,
 	rawWriter io.Writer,
 	resolve AdapterResolver,
+	deps *AgentDeps,
 ) {
 	// Setup: decode request, resolve adapter, start keepalive.
-	setup, stopKeepalive := setupRunSSESession(ctx, reqBody, contentType, rawWriter, resolve)
+	setup, stopKeepalive := setupRunSSESession(ctx, reqBody, contentType, rawWriter, resolve, deps)
 	defer stopKeepalive()
 	if setup.w == nil {
 		return // setupRunSSESession wrote the error
@@ -302,6 +303,7 @@ func writeEndStreamError(w io.Writer, msg string) {
 // refactor.
 var _ = proto.Marshal
 type setupResult struct {
+	deps            *AgentDeps
 	w               *lockedWriter
 	sess            *Session
 	requestID       string
