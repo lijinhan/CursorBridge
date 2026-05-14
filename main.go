@@ -56,7 +56,9 @@ func main() {
 		Title:         "CursorBridge",
 		Width:         1000,
 		Height:        540,
-		DisableResize: true,
+		MinWidth:      800,
+		MinHeight:     400,
+		DisableResize: false,
 		Frameless:     true,
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
