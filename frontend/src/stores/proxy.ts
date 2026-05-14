@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { ProxyService } from "../../bindings/cursorbridge/internal/bridge";
-import type { ProxyState, ModelAdapter, UserConfig, CursorTweaks, Provider, UsageStats } from "../types";
+import { UpdateService } from "../../bindings/cursorbridge/internal/bridge";
+import type { ProxyState, ModelAdapter, UserConfig, CursorTweaks, Provider, UsageStats, UpdateState } from "../types";
 
 export const useProxyStore = defineStore("proxy", () => {
   const state = ref<ProxyState>({
@@ -38,6 +39,12 @@ export const useProxyStore = defineStore("proxy", () => {
     last7Days: [],
   });
   const statsLoading = ref(false);
+  const updateState = ref<UpdateState>({
+    checking: false,
+    available: false,
+    downloading: false,
+    installing: false,
+  });
 
   const filteredAdapters = computed(() =>
     cfg.value.modelAdapters
@@ -166,12 +173,29 @@ export const useProxyStore = defineStore("proxy", () => {
     state.value.lastError = undefined;
   }
 
+  async function checkForUpdates() {
+    updateState.value = (await UpdateService.CheckForUpdates()) as UpdateState;
+  }
+
+  async function downloadUpdate() {
+    updateState.value = (await UpdateService.DownloadUpdate()) as UpdateState;
+  }
+
+  async function installUpdate() {
+    updateState.value = (await UpdateService.InstallUpdate()) as UpdateState;
+  }
+
+  async function dismissUpdate() {
+    updateState.value = (await UpdateService.DismissUpdate()) as UpdateState;
+  }
+
   return {
     state, cfg, tweaks, busy, caBusy, providerTab, stats, statsLoading,
+    updateState,
     filteredAdapters, openAICount, anthropicCount, modelOptions, shortFP,
     allTweaksOn, maxDailyTotal,
     refresh, loadStats, toggleService, persistConfig, toggleCAInstall,
     applyTweaks, revertTweaks, testAdapter, testAll, duplicate, removeAdapter,
-    clearError,
+    clearError, checkForUpdates, downloadUpdate, installUpdate, dismissUpdate,
   };
 });

@@ -52,6 +52,12 @@ func main() {
 		},
 	})
 
+	updateSvc := bridge.NewUpdateService(func() {
+		proxySvc.Shutdown()
+		app.Quit()
+	})
+	app.RegisterService(application.NewService(updateSvc))
+
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:         "CursorBridge",
 		Width:         1000,

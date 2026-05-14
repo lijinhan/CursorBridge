@@ -351,3 +351,100 @@ const $$createType2 = DailyUsageEntry.createFrom;
 const $$createType3 = $Create.Array($$createType2);
 const $$createType4 = ModelAdapterConfig.createFrom;
 const $$createType5 = $Create.Array($$createType4);
+
+export class DownloadProgress {
+    "downloaded": number;
+    "total": number;
+    "percent": number;
+    "path": string;
+
+    constructor($$source: Partial<DownloadProgress> = {}) {
+        if (!("downloaded" in $$source)) {
+            this["downloaded"] = 0;
+        }
+        if (!("total" in $$source)) {
+            this["total"] = 0;
+        }
+        if (!("percent" in $$source)) {
+            this["percent"] = 0;
+        }
+        if (!("path" in $$source)) {
+            this["path"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    static createFrom($$source: any = {}): DownloadProgress {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new DownloadProgress($$parsedSource as Partial<DownloadProgress>);
+    }
+}
+
+export class UpdateInfo {
+    "hasUpdate": boolean;
+    "currentTag": string;
+    "latestTag": string;
+    "downloadURL"?: string;
+    "filename"?: string;
+    "fileSize"?: number;
+    "sha256URL"?: string;
+    "changelogURL"?: string;
+
+    constructor($$source: Partial<UpdateInfo> = {}) {
+        if (!("hasUpdate" in $$source)) {
+            this["hasUpdate"] = false;
+        }
+        if (!("currentTag" in $$source)) {
+            this["currentTag"] = "";
+        }
+        if (!("latestTag" in $$source)) {
+            this["latestTag"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    static createFrom($$source: any = {}): UpdateInfo {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new UpdateInfo($$parsedSource as Partial<UpdateInfo>);
+    }
+}
+
+export class UpdateState {
+    "checking": boolean;
+    "available": boolean;
+    "downloading": boolean;
+    "installing": boolean;
+    "info"?: UpdateInfo;
+    "progress"?: DownloadProgress;
+    "error"?: string;
+
+    constructor($$source: Partial<UpdateState> = {}) {
+        if (!("checking" in $$source)) {
+            this["checking"] = false;
+        }
+        if (!("available" in $$source)) {
+            this["available"] = false;
+        }
+        if (!("downloading" in $$source)) {
+            this["downloading"] = false;
+        }
+        if (!("installing" in $$source)) {
+            this["installing"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    static createFrom($$source: any = {}): UpdateState {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("info" in $$parsedSource && $$parsedSource["info"] !== null) {
+            $$parsedSource["info"] = UpdateInfo.createFrom($$parsedSource["info"]);
+        }
+        if ("progress" in $$parsedSource && $$parsedSource["progress"] !== null) {
+            $$parsedSource["progress"] = DownloadProgress.createFrom($$parsedSource["progress"]);
+        }
+        return new UpdateState($$parsedSource as Partial<UpdateState>);
+    }
+}

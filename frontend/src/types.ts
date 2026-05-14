@@ -81,3 +81,31 @@ export type UsageStats = {
   perModel: ModelUsageEntry[];
   last7Days: DailyUsageEntry[];
 };
+
+export type UpdateInfo = {
+  hasUpdate: boolean;
+  currentTag: string;
+  latestTag: string;
+  downloadURL?: string;
+  filename?: string;
+  fileSize?: number;
+  sha256URL?: string;
+  changelogURL?: string;
+};
+
+export type DownloadProgress = {
+  downloaded: number;
+  total: number;
+  percent: number;
+  path: string;
+};
+
+export type UpdateState = {
+  checking: boolean;
+  available: boolean;
+  downloading: boolean;
+  installing: boolean;
+  info?: UpdateInfo;
+  progress?: DownloadProgress;
+  error?: string;
+};
