@@ -44,12 +44,9 @@ export const useProxyStore = defineStore("proxy", () => {
       .map((a, i) => ({ a, i }))
       .filter((x) => x.a.type === providerTab.value),
   );
-  const openAICount = computed(() =>
-    cfg.value.modelAdapters.filter((a) => a.type === "openai").length,
-  );
-  const anthropicCount = computed(() =>
-    cfg.value.modelAdapters.filter((a) => a.type === "anthropic").length,
-  );
+  function adapterCountByType(type: string): number {
+    return cfg.value.modelAdapters.filter((a) => a.type === type).length;
+  }
   const modelOptions = computed(() =>
     cfg.value.modelAdapters.map((a, i) => ({
       value: a.modelID,
@@ -168,7 +165,7 @@ export const useProxyStore = defineStore("proxy", () => {
 
   return {
     state, cfg, tweaks, busy, caBusy, providerTab, stats, statsLoading,
-    filteredAdapters, openAICount, anthropicCount, modelOptions, shortFP,
+    filteredAdapters, adapterCountByType, modelOptions, shortFP,
     allTweaksOn, maxDailyTotal,
     refresh, loadStats, toggleService, persistConfig, toggleCAInstall,
     applyTweaks, revertTweaks, testAdapter, testAll, duplicate, removeAdapter,

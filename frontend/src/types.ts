@@ -56,7 +56,7 @@ export type CursorTweaks = {
 };
 
 export type View = "overview" | "models" | "stats" | "editor";
-export type Provider = "openai" | "anthropic";
+export type Provider = "openai" | "anthropic" | "gemini" | "deepseek" | "ollama" | "mistral" | "custom";
 
 export type ModelUsageEntry = {
   model: string;
