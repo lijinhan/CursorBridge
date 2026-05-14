@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"cursorbridge/internal/appdir"
 	"cursorbridge/internal/safefile"
 )
 
@@ -43,7 +44,7 @@ type darwinSysProxyBackup struct {
 }
 
 func sysProxyBackupPath() string {
-	dir, err := configDir()
+	dir, err := appdir.ConfigDir()
 	if err != nil {
 		return ""
 	}
