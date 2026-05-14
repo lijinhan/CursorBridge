@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"cursorbridge/internal/codec"
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"cursorbridge/internal/strutil"
 	"net/http"
 	"strings"
@@ -73,7 +73,7 @@ func handleAgentBidiAppendDecoded(bidi *aiserverv1.BidiAppendRequest) Result {
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
-					debuglog.Printf("[BIDI] proto.Unmarshal AgentClientMessage panicked: %v", r)
+					logutil.Warn("proto.Unmarshal AgentClientMessage panicked", "error", r)
 					err = fmt.Errorf("proto panic: %v", r)
 				}
 			}()
@@ -185,9 +185,9 @@ func extractIntoSession(sess *Session, acm *agentv1.AgentClientMessage) {
 		//  2. system-role messages in ConversationState.root_prompt_messages_json
 		if csp := run.GetCustomSystemPrompt(); csp != "" {
 			sess.CursorSystemPrompt = csp
-			debuglog.Printf("[DEBUG] custom_system_prompt len=%d prefix=%s", len(csp), strutil.Truncate(csp, 100))
+			logutil.Debug("custom_system_prompt", "len", len(csp), "prefix", strutil.Truncate(csp, 100))
 		} else {
-			debuglog.Printf("[DEBUG] custom_system_prompt is empty")
+			logutil.Debug("custom_system_prompt is empty")
 		}
 		if action := run.GetAction(); action != nil {
 			sess.Action = action
@@ -225,7 +225,7 @@ func extractIntoSession(sess *Session, acm *agentv1.AgentClientMessage) {
 				} else {
 					sess.Mode = agentv1.AgentMode_AGENT_MODE_AGENT
 				}
-				debuglog.Printf("[BIDI] ExecutePlanAction: userTextLen=%d mode=%v", len(sess.UserText), sess.Mode)
+				logutil.Debug("bidi: ExecutePlanAction", "userTextLen", len(sess.UserText), "mode", sess.Mode)
 			} else if spa := action.GetStartPlanAction(); spa != nil {
 				if msg := spa.GetUserMessage(); msg != nil {
 					if msg.GetText() != "" {
@@ -237,11 +237,11 @@ func extractIntoSession(sess *Session, acm *agentv1.AgentClientMessage) {
 						sess.Mode = agentv1.AgentMode_AGENT_MODE_PLAN
 					}
 				}
-				debuglog.Printf("[BIDI] StartPlanAction: userTextLen=%d mode=%v", len(sess.UserText), sess.Mode)
+				logutil.Debug("bidi: StartPlanAction", "userTextLen", len(sess.UserText), "mode", sess.Mode)
 			} else if ra := action.GetResumeAction(); ra != nil {
-				debuglog.Printf("[BIDI] ResumeAction: no new UserText, mode stays %v", sess.Mode)
+				logutil.Debug("bidi: ResumeAction: no new UserText", "mode", sess.Mode)
 			} else {
-				debuglog.Printf("[BIDI] unhandled action type: %T", action)
+				logutil.Debug("bidi: unhandled action type", "type", action)
 			}
 		}
 		// If custom_system_prompt was empty, try extracting system-role content
@@ -249,15 +249,15 @@ func extractIntoSession(sess *Session, acm *agentv1.AgentClientMessage) {
 		// as carry-forward context; some carry role="system" with the main prompt.
 		if sess.CursorSystemPrompt == "" && sess.State != nil {
 			blobs := sess.State.GetRootPromptMessagesJson()
-			debuglog.Printf("[DEBUG] root_prompt_messages_json count=%d", len(blobs))
+			logutil.Debug("root_prompt_messages_json", "count", len(blobs))
 			for i, b := range blobs {
-				debuglog.Printf("[DEBUG] root_prompt_messages_json[%d] len=%d prefix=%s", i, len(b), strutil.Truncate(string(b), 200))
+				logutil.Debug("root_prompt_messages_json entry", "index", i, "len", len(b), "prefix", strutil.Truncate(string(b), 200))
 			}
 			sess.CursorSystemPrompt = extractSystemPromptFromRootMessages(sess.State)
 			if sess.CursorSystemPrompt != "" {
-				debuglog.Printf("[DEBUG] extracted system prompt from root_prompt_messages_json, len=%d", len(sess.CursorSystemPrompt))
+				logutil.Debug("extracted system prompt from root_prompt_messages_json", "len", len(sess.CursorSystemPrompt))
 			} else {
-				debuglog.Printf("[DEBUG] no system-role messages in root_prompt_messages_json")
+				logutil.Debug("no system-role messages in root_prompt_messages_json")
 			}
 		}
 	}
@@ -411,7 +411,7 @@ func shouldRouteToBugBot(bidi *aiserverv1.BidiAppendRequest) bool {
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				debuglog.Printf("[BIDI] shouldRouteToBugBot: proto.Unmarshal panicked: %v", r)
+				logutil.Warn("shouldRouteToBugBot: proto.Unmarshal panicked", "error", r)
 				err = fmt.Errorf("proto panic: %v", r)
 			}
 		}()

@@ -8,7 +8,7 @@ package agent
 import (
 	"context"
 	"fmt"
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"strings"
 	"sync"
 	"time"
@@ -414,10 +414,10 @@ func HistoryFor(conversationID string) []*ConvTurn {
 	defer store.mu.RUnlock()
 	src := store.history[conversationID]
 	if len(src) == 0 {
-		debuglog.Printf("[HISTORY] HistoryFor conversationID=%s: no turns found (keys in store: %d)", conversationID, len(store.history))
+		logutil.Debug("history: no turns found", "conversationID", conversationID, "storeKeys", len(store.history))
 		return nil
 	}
-	debuglog.Printf("[HISTORY] HistoryFor conversationID=%s: %d turns found", conversationID, len(src))
+	logutil.Debug("history: turns found", "conversationID", conversationID, "turns", len(src))
 	out := make([]*ConvTurn, len(src))
 	copy(out, src)
 	return out
@@ -459,7 +459,7 @@ func RecordTurn(conversationID, requestID, user, assistant, mode string, art *tu
 	if conversationID == "" || user == "" {
 		return
 	}
-	debuglog.Printf("[HISTORY] RecordTurn conversationID=%s requestID=%s userLen=%d assistantLen=%d msgsLen=%d", conversationID, requestID, len(user), len(assistant), len(messages))
+	logutil.Debug("history: record turn", "conversationID", conversationID, "requestID", requestID, "userLen", len(user), "assistantLen", len(assistant), "msgsLen", len(messages))
 	turn := &ConvTurn{User: user, Assistant: assistant, Messages: messages}
 	store.mu.Lock()
 	turns := store.history[conversationID]
@@ -504,7 +504,7 @@ func modeString(m agentv1.AgentMode) string {
 //     decides whether UserText is usable.
 func WaitForSession(ctx context.Context, id string) *Session {
 	if id == "" {
-		debuglog.Printf("[SESSION] WaitForSession id=empty, returning nil")
+		logutil.Debug("session: WaitForSession id empty, returning nil")
 		return nil
 	}
 	deadline := time.Now().Add(5 * time.Second)
@@ -514,7 +514,7 @@ func WaitForSession(ctx context.Context, id string) *Session {
 	for {
 		if sess := GetSession(id); sess != nil {
 			if sess.UserText != "" {
-				debuglog.Printf("[SESSION] WaitForSession id=%s found session with UserText (conversationID=%s)", id, sess.ConversationID)
+				logutil.Debug("session: WaitForSession found session with UserText", "id", id, "conversationID", sess.ConversationID)
 				return sess
 			}
 			if fallback := store.textfulSessionForConversation(sess.ConversationID); fallback != nil {
@@ -523,7 +523,7 @@ func WaitForSession(ctx context.Context, id string) *Session {
 				clone.ConversationID = sess.ConversationID
 				clone.McpMap = nil
 				PutSession(&clone)
-				debuglog.Printf("[SESSION] WaitForSession id=%s cloned textful fallback (conversationID=%s)", id, sess.ConversationID)
+				logutil.Debug("session: WaitForSession cloned textful fallback", "id", id, "conversationID", sess.ConversationID)
 				return &clone
 			}
 		}
@@ -545,10 +545,10 @@ func WaitForSession(ctx context.Context, id string) *Session {
 				}
 				clone.McpMap = nil
 				PutSession(&clone)
-				debuglog.Printf("[SESSION] WaitForSession id=%s timed out, cloned lastConv fallback (conversationID=%s)", id, clone.ConversationID)
+				logutil.Debug("session: WaitForSession timed out, cloned lastConv fallback", "id", id, "conversationID", clone.ConversationID)
 				return &clone
 			}
-			debuglog.Printf("[SESSION] WaitForSession id=%s timed out, session=%v", id, sess != nil)
+			logutil.Warn("session: WaitForSession timed out", "id", id, "hasSession", sess != nil)
 			return sess
 		}
 		select {
@@ -564,11 +564,11 @@ func WaitForSession(ctx context.Context, id string) *Session {
 					clone.ConversationID = sess.ConversationID
 					clone.McpMap = nil
 					PutSession(&clone)
-					debuglog.Printf("[SESSION] WaitForSession id=%s ctx-cancelled, cloned textful fallback (conversationID=%s)", id, sess.ConversationID)
+					logutil.Debug("session: WaitForSession ctx-cancelled, cloned textful fallback", "id", id, "conversationID", sess.ConversationID)
 					return &clone
 				}
 			}
-			debuglog.Printf("[SESSION] WaitForSession id=%s ctx-cancelled, returning nil", id)
+			logutil.Warn("session: WaitForSession ctx-cancelled, returning nil", "id", id)
 			return nil
 		case <-time.After(25 * time.Millisecond):
 		}

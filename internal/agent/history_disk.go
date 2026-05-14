@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"cursorbridge/internal/safefile"
 )
 
@@ -412,15 +412,15 @@ func ComputeUsageStats() UsageSnapshot {
 func loadAllHistory() {
 	root := historyRoot()
 	if root == "" {
-		debuglog.Printf("[HISTORY-DISK] loadAllHistory: historyRoot is empty, skipping")
+		logutil.Debug("loadAllHistory: historyRoot is empty, skipping")
 		return
 	}
 	entries, err := os.ReadDir(root)
 	if err != nil {
-		debuglog.Printf("[HISTORY-DISK] loadAllHistory: ReadDir(%s) error: %v", root, err)
+		logutil.Warn("loadAllHistory: ReadDir error", "root", root, "error", err)
 		return
 	}
-	debuglog.Printf("[HISTORY-DISK] loadAllHistory: scanning %d entries in %s", len(entries), root)
+	logutil.Debug("loadAllHistory: scanning entries", "count", len(entries), "root", root)
 	for _, ent := range entries {
 		if !ent.IsDir() {
 			continue
@@ -471,7 +471,7 @@ func loadAllHistory() {
 			continue
 		}
 		store.mu.Lock()
-		debuglog.Printf("[HISTORY-DISK] loadAllHistory: dir=%s conversation_id=%s turns=%d key=%s", ent.Name(), cf.ConversationID, len(turns), cf.ConversationID)
+		logutil.Debug("loadAllHistory: loaded conversation", "dir", ent.Name(), "conversationID", cf.ConversationID, "turns", len(turns))
 		store.history[cf.ConversationID] = turns
 		store.mu.Unlock()
 	}

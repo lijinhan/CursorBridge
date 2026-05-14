@@ -2,7 +2,7 @@ package agent
 
 import (
 	"encoding/json"
-	"cursorbridge/internal/debuglog"
+	"cursorbridge/internal/logutil"
 	"cursorbridge/internal/strutil"
 
 	agentv1 "cursorbridge/internal/protocodec/gen/agent/v1"
@@ -47,7 +47,7 @@ func buildMessageHistory(sess *Session) []openAIMessage {
 	compState.mu.RUnlock()
 
 	if hist := HistoryFor(sess.ConversationID); len(hist) > 0 {
-		debuglog.Printf("[HISTORY] conversationID=%s found %d turns in local history", sess.ConversationID, len(hist))
+		logutil.Debug("history: found turns in local history", "conversationID", sess.ConversationID, "turns", len(hist))
 
 		// If we have an existing compaction summary, inject it before the
 		// turns that fall within the summary's window_tail (the turns the
@@ -65,7 +65,7 @@ func buildMessageHistory(sess *Session) []openAIMessage {
 		compState.mu.RUnlock()
 
 		if existingSummary != "" && windowTail > 0 && windowTail < len(hist) {
-			debuglog.Printf("[COMPACTION] conversationID=%s injecting summary (windowTail=%d, totalTurns=%d), skipping %d old turns", sess.ConversationID, windowTail, len(hist), windowTail)
+			logutil.Debug("compaction: injecting summary", "conversationID", sess.ConversationID, "windowTail", windowTail, "totalTurns", len(hist), "skipping", windowTail)
 			out = append(out, textMessage("user", "<conversation_summary>\nThe following is a summary of earlier conversation turns that were compressed to save context space. Use this as background context — it preserves key decisions, code changes, and unresolved issues from the preceding discussion:\n\n"+existingSummary+"\n</conversation_summary>"))
 			// Only replay turns after the summary's window_tail
 			for _, t := range hist[windowTail:] {
@@ -77,13 +77,13 @@ func buildMessageHistory(sess *Session) []openAIMessage {
 			}
 		}
 	} else if sess.State != nil {
-		debuglog.Printf("[HISTORY] conversationID=%s no local history, falling back to proto State.Turns (%d turns)", sess.ConversationID, len(sess.State.Turns))
+		logutil.Debug("history: no local history, falling back to proto State.Turns", "conversationID", sess.ConversationID, "protoTurns", len(sess.State.Turns))
 
 		// Check for proto-level summary in ConversationStateStructure
 		if summaryBytes := sess.State.GetSummary(); len(summaryBytes) > 0 {
 			summaryText := string(summaryBytes)
 			if summaryText != "" {
-				debuglog.Printf("[COMPACTION] conversationID=%s injecting proto-level summary (len=%d)", sess.ConversationID, len(summaryText))
+				logutil.Debug("compaction: injecting proto-level summary", "conversationID", sess.ConversationID, "len", len(summaryText))
 				out = append(out, textMessage("user", "<conversation_summary>\n"+summaryText+"\n</conversation_summary>"))
 			}
 		}
@@ -118,7 +118,7 @@ func buildMessageHistory(sess *Session) []openAIMessage {
 
 		// Inject proto-level summary if we found one and haven't already
 		if existingSummary != "" && len(sess.State.GetSummary()) == 0 {
-			debuglog.Printf("[COMPACTION] conversationID=%s injecting archive-level summary (protoWindowTail=%d)", sess.ConversationID, protoWindowTail)
+			logutil.Debug("compaction: injecting archive-level summary", "conversationID", sess.ConversationID, "protoWindowTail", protoWindowTail)
 			out = append(out, textMessage("user", "<conversation_summary>\n"+existingSummary+"\n</conversation_summary>"))
 		}
 
