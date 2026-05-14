@@ -7,8 +7,8 @@ import (
 )
 
 // AgentDeps aggregates all package-level mutable state used by the agent
-// handlers. Defining it explicitly makes state testable and prepares for
-// future dependency-injection patterns.
+// handlers. Passed explicitly via dependency injection rather than accessed
+// as a global variable, enabling isolated testing and multiple instances.
 type AgentDeps struct {
 	// Tool execution: tool_call_id → result channel.
 	PendingMu sync.Mutex
@@ -43,11 +43,12 @@ type AgentDeps struct {
 	sweepCancel context.CancelFunc
 }
 
-// DefaultDeps is the global deps instance used by all agent handlers unless
-// explicitly overridden (e.g. in tests).
-var DefaultDeps = newAgentDeps()
+// DefaultDeps is the default deps instance used by production code.
+// Tests should create their own AgentDeps via NewAgentDeps() for isolation.
+var DefaultDeps = NewAgentDeps()
 
-func newAgentDeps() *AgentDeps {
+// NewAgentDeps creates a fresh AgentDeps instance with all maps initialized.
+func NewAgentDeps() *AgentDeps {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &AgentDeps{
 		Pending:             make(map[string]*pendingResult),

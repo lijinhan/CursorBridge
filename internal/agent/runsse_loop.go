@@ -305,7 +305,7 @@ func runCompaction(
 	messages []openAIMessage,
 	initialLen int,
 ) (*CompactionArchive, bool) {
-	compState := getCompactionState(setup.sess.ConversationID)
+	compState := getCompactionState(setup.deps, setup.sess.ConversationID)
 	compState.mu.Lock()
 	if compState.Compacting {
 		compState.mu.Unlock()

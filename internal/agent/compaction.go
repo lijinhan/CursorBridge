@@ -49,14 +49,14 @@ type CompactionState struct {
 }
 
 // getCompactionState 获取或创建会话的压缩状态
-func getCompactionState(conversationID string) *CompactionState {
-	DefaultDeps.CompactionStatesMu.Lock()
-	defer DefaultDeps.CompactionStatesMu.Unlock()
-	if cs, ok := DefaultDeps.CompactionStates[conversationID]; ok {
+func getCompactionState(deps *AgentDeps, conversationID string) *CompactionState {
+	deps.CompactionStatesMu.Lock()
+	defer deps.CompactionStatesMu.Unlock()
+	if cs, ok := deps.CompactionStates[conversationID]; ok {
 		return cs
 	}
 	cs := &CompactionState{}
-	DefaultDeps.CompactionStates[conversationID] = cs
+	deps.CompactionStates[conversationID] = cs
 	return cs
 }
 

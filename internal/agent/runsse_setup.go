@@ -22,6 +22,7 @@ func setupRunSSESession(
 	contentType string,
 	rawWriter io.Writer,
 	resolve AdapterResolver,
+	deps *AgentDeps,
 ) (setupResult, func()) {
 	w := &lockedWriter{w: rawWriter}
 	bid := &aiserverv1.BidiRequestId{}
@@ -105,6 +106,7 @@ func setupRunSSESession(
 	}
 
 	return setupResult{
+		deps:            deps,
 		w:               w,
 		sess:            sess,
 		requestID:       requestID,
