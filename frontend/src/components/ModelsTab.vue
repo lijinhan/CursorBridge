@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useProxyStore } from "../stores/proxy";
 import type { Provider } from "../types";
+import { t } from "../i18n";
 import OpenAIMark from "./logos/OpenAIMark.vue";
 import AnthropicMark from "./logos/AnthropicMark.vue";
 
@@ -69,10 +70,10 @@ function openEditor(i: number) {
         @click="store.testAll"
         :disabled="!store.filteredAdapters.length"
       >
-        Test all
+        {{ t('models.testAll') }}
       </button>
       <button class="btn btn-primary" @click="openEditor(-1)">
-        + 添加模型
+        {{ t('models.addModel') }}
       </button>
     </div>
 
@@ -82,13 +83,13 @@ function openEditor(i: number) {
         <AnthropicMark v-else />
       </div>
       <div class="empty-title">
-        No {{ store.providerTab === "openai" ? "OpenAI" : "Anthropic" }} models yet
+        {{ t('models.noModels', { provider: store.providerTab === 'openai' ? 'OpenAI' : 'Anthropic' }) }}
       </div>
       <div class="empty-desc">
-        Add a model to route BYOK requests through your own API key.
+        {{ t('models.addFirstDesc') }}
       </div>
       <button class="btn btn-primary" @click="openEditor(-1)">
-        + Add your first model
+        {{ t('models.addFirst') }}
       </button>
     </div>
 
@@ -105,7 +106,7 @@ function openEditor(i: number) {
               class="mc-logo"
             />
             <div>
-              <div class="mc-name">{{ a.displayName || "未命名" }}</div>
+              <div class="mc-name">{{ a.displayName || t('overview.unnamed') }}</div>
               <div class="mc-id mono">{{ a.modelID || "—" }}</div>
             </div>
           </div>
@@ -122,21 +123,21 @@ function openEditor(i: number) {
             <span class="mc-status-dot" />
             {{
               a.lastTestResult === "ok"
-                ? "Healthy"
+                ? t('models.healthy')
                 : a.lastTestResult
-                  ? "Error"
-                  : "Untested"
+                  ? t('models.error')
+                  : t('models.untested')
             }}
           </span>
         </header>
 
         <dl class="mc-grid">
           <div>
-            <dt>Host</dt>
+            <dt>{{ t('models.host') }}</dt>
             <dd class="mono">{{ shortHost(a.baseURL) }}</dd>
           </div>
           <div>
-            <dt>API key</dt>
+            <dt>{{ t('models.apiKey') }}</dt>
             <dd class="mono">{{ obscure(a.apiKey) }}</dd>
           </div>
         </dl>
@@ -147,13 +148,13 @@ function openEditor(i: number) {
             @click="testAdapter(i)"
             :disabled="testingIndex === i"
           >
-            {{ testingIndex === i ? "Testing..." : "Test" }}
+            {{ testingIndex === i ? t('models.testing') : t('models.test') }}
           </button>
-          <button class="chip" @click="openEditor(i)">Edit</button>
-          <button class="chip" @click="store.duplicate(i)">Duplicate</button>
+          <button class="chip" @click="openEditor(i)">{{ t('models.edit') }}</button>
+          <button class="chip" @click="store.duplicate(i)">{{ t('models.duplicate') }}</button>
           <span class="tab-spacer" />
           <button class="chip chip-danger" @click="store.removeAdapter(i)">
-            Delete
+            {{ t('models.delete') }}
           </button>
         </footer>
       </article>

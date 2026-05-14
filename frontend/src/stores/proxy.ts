@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { ProxyService } from "../../bindings/cursorbridge/internal/bridge";
 import type { ProxyState, ModelAdapter, UserConfig, CursorTweaks, Provider, UsageStats } from "../types";
+import { t } from "../i18n";
 
 export const useProxyStore = defineStore("proxy", () => {
   const state = ref<ProxyState>({
