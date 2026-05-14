@@ -3,6 +3,7 @@ import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import { Events } from "@wailsio/runtime";
 import { useProxyStore } from "../stores/proxy";
 import type { ModelAdapter, Provider, View } from "../types";
+import { getPreset } from "../providers";
 
 import TopBar from "./TopBar.vue";
 import TabNav from "./TabNav.vue";
@@ -51,14 +52,15 @@ function openEditor(idx: number) {
   if (idx === -1) {
     editorIndex.value = -1;
     editorProvider.value = store.providerTab;
+    const preset = getPreset(store.providerTab);
     editorModel.value = {
       displayName: "",
       type: store.providerTab,
-      baseURL: "",
+      baseURL: preset.defaultBaseURL,
       apiKey: "",
-      modelID: "",
+      modelID: preset.defaultModel,
       contextWindow: "",
-      reasoningEffort: "medium",
+      reasoningEffort: preset.openAICompatible ? "medium" : "",
       serviceTier: "",
       maxOutputTokens: 0,
       thinkingBudget: 0,
@@ -70,7 +72,7 @@ function openEditor(idx: number) {
   } else {
     editorIndex.value = idx;
     const src = store.cfg.modelAdapters[idx];
-    editorProvider.value = src.type === "anthropic" ? "anthropic" : "openai";
+    editorProvider.value = src.type as Provider;
     editorModel.value = JSON.parse(JSON.stringify(src));
   }
   showApiKey.value = false;

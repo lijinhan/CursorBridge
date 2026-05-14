@@ -222,10 +222,18 @@ func HandleRunSSE(
 func providerFromURL(url string) string {
 	url = strings.ToLower(url)
 	switch {
-	case strings.Contains(url, "openai.com"):
-		return "openai"
 	case strings.Contains(url, "anthropic.com"):
 		return "anthropic"
+	case strings.Contains(url, "openai.com"):
+		return "openai"
+	case strings.Contains(url, "generativelanguage.googleapis.com"):
+		return "gemini"
+	case strings.Contains(url, "deepseek.com"):
+		return "deepseek"
+	case strings.Contains(url, "mistral.ai"):
+		return "mistral"
+	case strings.Contains(url, "localhost:11434"):
+		return "ollama"
 	case strings.Contains(url, "openrouter.ai"):
 		return "openrouter"
 	case strings.Contains(url, "groq.com"):

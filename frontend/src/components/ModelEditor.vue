@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import { useProxyStore } from "../stores/proxy";
 import type { ModelAdapter, Provider } from "../types";
+import { PROVIDER_PRESETS, getPreset } from "../providers";
 import OpenAIMark from "./logos/OpenAIMark.vue";
 import AnthropicMark from "./logos/AnthropicMark.vue";
 
