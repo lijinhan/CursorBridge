@@ -1,0 +1,31 @@
+# Build / task artifacts
+.task
+bin/
+dist/
+frontend/dist/*
+!frontend/dist/.keep
+frontend/node_modules/
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+
+# Scratch / local experiments
+.tmp_*
+build-smoke.log
+
+# Root-level binaries / tooling artifacts
+rsrc
+wails_windows_amd64
+*.exe
+*.syso
+
+# Editor / OS noise
+.vscode/
+.idea/
+.claude/
+.cursor/
+.DS_Store
+Thumbs.db
+
+# Local env
+.env
+.env.local

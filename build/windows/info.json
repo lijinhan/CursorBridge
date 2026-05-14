@@ -1,0 +1,15 @@
+{
+	"fixed": {
+		"file_version": "1.0.1"
+	},
+	"info": {
+		"0000": {
+			"ProductVersion": "1.0.1",
+			"CompanyName": "CursorBridge",
+			"FileDescription": "CursorBridge - Local MITM proxy & BYOK gateway for Cursor IDE",
+			"LegalCopyright": "© 2026 CursorBridge",
+			"ProductName": "CursorBridge",
+			"Comments": "Intercepts Cursor IDE traffic and routes model calls through user-supplied API keys."
+		}
+	}
+}

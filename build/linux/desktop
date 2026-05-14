@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=cursor-byok
+Comment=cursor-byok - Local MITM proxy & BYOK gateway for Cursor IDE
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/cursor-byok %u
+Terminal=false
+Type=Application
+Icon=cursor-byok
+Categories=Utility;
+StartupWMClass=cursor-byok
+
+ 
