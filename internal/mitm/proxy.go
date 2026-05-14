@@ -85,6 +85,15 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 	agentAPI2Paths := map[string]struct{}{
 		"/aiserver.v1.BidiService/BidiAppend": {},
 		"/agent.v1.AgentService/RunSSE":       {},
+		"/aiserver.v1.AiService/GetChatTitle":                {},
+		"/aiserver.v1.AiService/GetTerminalCompletion":       {},
+		"/aiserver.v1.AiService/GetChatSuggestions":          {},
+		"/aiserver.v1.AiService/GetConversationSummary":      {},
+		"/aiserver.v1.AiService/GenerateTldr":                {},
+		"/aiserver.v1.AiService/LintExplanation":              {},
+		"/aiserver.v1.AiService/StreamDiffReview":             {},
+		"/aiserver.v1.AiService/CountTokens":                  {},
+			"/aiserver.v1.AiService/GetMcpTools":                  {},
 		"/aiserver.v1.AiService/WriteGitCommitMessage":         {},
 		"/aiserver.v1.AiService/StreamBugBotAgenticSSE":        {},
 		"/aiserver.v1.BackgroundComposerService/AddAsyncFollowupBackgroundComposer": {},
@@ -121,8 +130,7 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 		"/aiserver.v1.AiService/GetNudgeData":           {},
 		"/aiserver.v1.AiService/GetPaywallState":        {},
 		"/aiserver.v1.AiService/GetAiderConfig":         {},
-		"/aiserver.v1.AiService/GetMcpServers":          {},
-		"/aiserver.v1.AiService/GetNotepad":             {},
+			"/aiserver.v1.AiService/GetNotepad":             {},
 		"/aiserver.v1.AiService/GetUserStatus":          {},
 		"/aiserver.v1.AiService/GetUserPreferences":     {},
 		"/aiserver.v1.AiService/GetLspTools":            {},
@@ -229,6 +237,33 @@ func New(addr string, ca *certs.CA, gw *relay.Gateway, resolver AgentResolver, s
 				}
 				if path == "/aiserver.v1.BackgroundComposerService/StreamInteractionUpdatesSSE" {
 					return req, handleBackgroundComposerInteractionUpdates(req)
+				}
+				if path == "/aiserver.v1.AiService/GetChatTitle" {
+					return req, handleGetChatTitle(req, resolver, selectedModel("chat"))
+				}
+				if path == "/aiserver.v1.AiService/GetTerminalCompletion" {
+					return req, handleGetTerminalCompletion(req, resolver, selectedModel("terminal"))
+				}
+				if path == "/aiserver.v1.AiService/GetChatSuggestions" {
+					return req, handleGetChatSuggestions(req, resolver, selectedModel("chat"))
+				}
+				if path == "/aiserver.v1.AiService/GetConversationSummary" {
+					return req, handleGetConversationSummary(req)
+				}
+				if path == "/aiserver.v1.AiService/GenerateTldr" {
+					return req, handleGenerateTldr(req, resolver, selectedModel("chat"))
+				}
+				if path == "/aiserver.v1.AiService/LintExplanation" {
+					return req, handleLintExplanation(req, resolver, selectedModel("chat"))
+				}
+				if path == "/aiserver.v1.AiService/StreamDiffReview" {
+					return req, handleStreamDiffReview(req, resolver, selectedModel("review"))
+				}
+				if path == "/aiserver.v1.AiService/CountTokens" {
+					return req, handleCountTokens(req)
+				}
+				if path == "/aiserver.v1.AiService/GetMcpTools" {
+					return req, handleGetMcpTools(req)
 				}
 			}
 			// 3. Blocked paths → 404 (prevent BYOK override from upstream)
