@@ -3,7 +3,7 @@ import { computed, ref } from "vue";
 import { ProxyService } from "../../bindings/cursorbridge/internal/bridge";
 import { Browser, System } from "@wailsio/runtime";
 import { useProxyStore } from "../stores/proxy";
-import { t } from "../i18n";
+import { t, locale, setLocale } from "../i18n";
 import OpenAIMark from "./logos/OpenAIMark.vue";
 import AnthropicMark from "./logos/AnthropicMark.vue";
 
@@ -15,23 +15,16 @@ const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
 
 const OS_LABEL = (() => {
   try {
-    if (System.IsWindows()) return "Windows 版本";
-    if (System.IsMac()) return "macOS 版本";
-    if (System.IsLinux()) return "Linux 版本";
+    if (System.IsWindows()) return t('settings.osWindows');
+    if (System.IsMac()) return t('settings.osMac');
+    if (System.IsLinux()) return t('settings.osLinux');
   } catch {
     /* runtime not ready (dev tools preview) — fall through */
   }
-  return "桌面版本";
+  return t('settings.osDesktop');
 })();
 
 const updateBusy = ref(false);
-
-const HELP = {
-  maxLoopRounds:
-    "Agent 工具调用循环的最大轮次。0 = 不限制（沿用原生 Cursor 体验，由客户端控制何时停止）。",
-  maxTurnDurationMin:
-    "每次 Agent 会话的最大时长（分钟）。0 = 不限制（沿用原生体验）。",
-};
 
 function openEditor(i: number) {
   emit("openEditor", i);
@@ -47,7 +40,7 @@ async function openSettingsFolder() {
 
 function openRepo() {
   Browser.OpenURL(GITHUB_URL).catch((e: any) => {
-    alert(`无法打开浏览器: ${e?.message ?? String(e)}`);
+    alert(t('footer.cannotOpenBrowser', { error: e?.message ?? String(e) }));
   });
 }
 
@@ -99,14 +92,14 @@ async function checkForUpdates() {
       );
       if (open) {
         Browser.OpenURL(htmlURL).catch((e: any) => {
-          alert(`Could not open browser: ${e?.message ?? String(e)}`);
+          alert(t('footer.cannotOpenBrowser', { error: e?.message ?? String(e) }));
         });
       }
     } else {
-      alert(`You are on the latest version (v${APP_VERSION}).`);
+      alert(t('footer.noUpdate'));
     }
   } catch (e: any) {
-    alert(`Update check failed: ${e?.message ?? String(e)}`);
+    alert(t('footer.updateError', { error: e?.message ?? String(e) }));
   } finally {
     updateBusy.value = false;
   }
@@ -121,13 +114,13 @@ const emit = defineEmits<{
   <div class="page">
     <!-- Model list -->
     <div class="overview-section-head">
-      <h3>模型</h3>
+      <h3>{{ t('overview.models') }}</h3>
       <button class="btn btn-primary btn-sm" @click="openEditor(-1)">
-        + 添加模型
+        {{ t('overview.addModel') }}
       </button>
     </div>
     <div v-if="!store.cfg.modelAdapters.length" class="empty-mini">
-      暂无已配置的模型。
+      {{ t('overview.noModels') }}
     </div>
     <div v-else class="overview-models">
       <article
@@ -141,7 +134,7 @@ const emit = defineEmits<{
           class="ov-logo"
         />
         <div class="ov-info">
-          <div class="ov-name">{{ a.displayName || "未命名" }}</div>
+          <div class="ov-name">{{ a.displayName || t('overview.unnamed') }}</div>
           <div class="ov-id mono">{{ a.modelID || "—" }}</div>
         </div>
         <span
@@ -166,15 +159,15 @@ const emit = defineEmits<{
     <div class="card" style="margin-top: 16px">
       <div class="row">
         <div class="row-text">
-          <div class="row-title">默认活动模型</div>
+          <div class="row-title">{{ t('settings.activeModel') }}</div>
           <div class="row-desc">
-            Controls which model new chats and unqualified requests use by default.
+            {{ t('settings.activeModelDesc') }}
           </div>
           <div class="special-model-grid">
             <label class="special-model-field">
-              <span>New chats</span>
+              <span>{{ t('settings.newChats') }}</span>
               <select v-model="store.cfg.activeModelID" @change="store.persistConfig">
-                <option value="">First configured model</option>
+                <option value="">{{ t('settings.firstModel') }}</option>
                 <option v-for="opt in store.modelOptions" :key="`active-${opt.value}`" :value="opt.value">
                   {{ opt.label }}
                 </option>
@@ -186,24 +179,24 @@ const emit = defineEmits<{
       <div class="hr" />
       <div class="row">
         <div class="row-text">
-          <div class="row-title">Specialized model routing</div>
+          <div class="row-title">{{ t('settings.specializedRouting') }}</div>
           <div class="row-desc">
-            Choose dedicated models for commit message generation and code review.
+            {{ t('settings.activeModelDesc') }}
           </div>
           <div class="special-model-grid">
             <label class="special-model-field">
-              <span>Commit generator</span>
+              <span>{{ t('settings.commitGen') }}</span>
               <select v-model="store.cfg.commitModelID" @change="store.persistConfig">
-                <option value="">Default model</option>
+                <option value="">{{ t('settings.defaultModel') }}</option>
                 <option v-for="opt in store.modelOptions" :key="`commit-${opt.value}`" :value="opt.value">
                   {{ opt.label }}
                 </option>
               </select>
             </label>
             <label class="special-model-field">
-              <span>Code review</span>
+              <span>{{ t('settings.codeReview') }}</span>
               <select v-model="store.cfg.reviewModelID" @change="store.persistConfig">
-                <option value="">Default model</option>
+                <option value="">{{ t('settings.defaultModel') }}</option>
                 <option v-for="opt in store.modelOptions" :key="`review-${opt.value}`" :value="opt.value">
                   {{ opt.label }}
                 </option>
@@ -216,18 +209,18 @@ const emit = defineEmits<{
       <div class="row">
         <div class="row-text">
           <div class="row-title">
-            Trust local CA
+            {{ t('settings.trustCA') }}
             <span
               :class="[
                 'row-chip',
                 store.state.caInstalled ? 'chip-ok' : 'chip-warn',
               ]"
             >
-              {{ store.state.caInstalled ? "Installed" : "Not installed" }}
+              {{ store.state.caInstalled ? t('settings.installed') : t('settings.notInstalled') }}
             </span>
           </div>
           <div class="row-desc">
-            Adds cursor-byok's CA to the current-user trusted store so
+            Adds CursorBridge's CA to the current-user trusted store so
             Cursor can verify TLS on intercepted connections.
           </div>
           <div class="row-subdesc">
@@ -244,7 +237,7 @@ const emit = defineEmits<{
             :disabled="store.caBusy"
             @click="store.toggleCAInstall"
           >
-            {{ store.state.caInstalled ? "Uninstall CA" : "Install CA" }}
+            {{ store.state.caInstalled ? t('settings.uninstallCA') : t('settings.installCA') }}
           </button>
         </div>
       </div>
@@ -252,16 +245,15 @@ const emit = defineEmits<{
       <div class="row">
         <div class="row-text">
           <div class="row-title">
-            Agent loop limits
-            <span class="row-chip chip-info">0 = native</span>
+            {{ t('settings.loopLimits') }}
+            <span class="row-chip chip-info">{{ t('settings.zeroNative') }}</span>
           </div>
           <div class="row-desc">
-            Cap the agent tool-call loop. 0 means no limit — Cursor's native
-            behaviour where the client controls when to stop.
+            {{ t('help.maxLoopRounds') }}
           </div>
           <div class="special-model-grid">
             <label class="special-model-field">
-              <span>Max rounds</span>
+              <span>{{ t('settings.maxRounds') }}</span>
               <input
                 v-model.number="store.cfg.maxLoopRounds"
                 type="number"
@@ -272,7 +264,7 @@ const emit = defineEmits<{
               />
             </label>
             <label class="special-model-field">
-              <span>Max duration (min)</span>
+              <span>{{ t('settings.maxDuration') }}</span>
               <input
                 v-model.number="store.cfg.maxTurnDurationMin"
                 type="number"
@@ -288,15 +280,15 @@ const emit = defineEmits<{
       <div class="hr" />
       <div class="row">
         <div class="row-text">
-          <div class="row-title">Settings folder</div>
-          <div class="row-desc">Your config and CA live here.</div>
+          <div class="row-title">{{ t('settings.settingsFolder') }}</div>
+          <div class="row-desc">{{ t('settings.configDesc') }}</div>
           <code class="row-path">{{
             store.state.caPath?.replace(/\\ca\\ca\.crt$/, "") || ""
           }}</code>
         </div>
         <div class="row-actions">
           <button class="btn btn-ghost" @click="openSettingsFolder">
-            Open folder
+            {{ t('settings.openFolder') }}
           </button>
         </div>
       </div>
@@ -312,13 +304,17 @@ const emit = defineEmits<{
       <span class="sep">·</span>
       <span>{{ OS_LABEL }}</span>
       <span class="footer-spacer" />
+      <select class="locale-select" :value="locale" @change="setLocale(($event.target as HTMLSelectElement).value)">
+        <option value="zh-CN">中文</option>
+        <option value="en">English</option>
+      </select>
       <button class="link-btn" @click="openRepo">GitHub</button>
       <button
         class="link-btn"
         @click="checkForUpdates"
         :disabled="updateBusy"
       >
-        {{ updateBusy ? "Checking…" : "Check for updates" }}
+        {{ updateBusy ? t('footer.checking') : t('footer.checkUpdates') }}
       </button>
     </div>
   </div>
@@ -402,5 +398,14 @@ const emit = defineEmits<{
 }
 .footer-spacer {
   flex: 1;
+}
+.locale-select {
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #a1a1aa;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>

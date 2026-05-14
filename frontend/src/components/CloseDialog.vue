@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { ProxyService } from "../../bindings/cursorbridge/internal/bridge";
+import { t } from "../i18n";
 
 const props = defineProps<{
   show: boolean;
@@ -13,14 +14,10 @@ async function pickClose(action: "quit" | "tray") {
   if (closeBusy.value) return;
   closeBusy.value = true;
   try {
-    // Persist the choice FIRST so the dispatch happens with the preference
-    // already on disk -- otherwise a crash between the two calls would leave
-    // the pref unset and the dialog would re-appear next close.
     if (rememberChoice.value) {
       try {
         await ProxyService.SetCloseAction(action);
       } catch (e: any) {
-        // Saving shouldn't block the close; surface but continue.
         console.warn("SetCloseAction failed:", e);
       }
     }
@@ -34,7 +31,6 @@ async function pickClose(action: "quit" | "tray") {
   }
 }
 
-/** Reset checkbox when dialog opens */
 function resetState() {
   rememberChoice.value = false;
 }
@@ -52,16 +48,14 @@ defineExpose({ resetState });
   >
     <div class="close-modal">
       <div class="close-modal-title" id="close-modal-title">
-        Close cursor-byok?
+        {{ t('close.title') }}
       </div>
       <div class="close-modal-desc">
-        The proxy keeps running in the background when minimized to the system
-        tray. Quitting stops the proxy and reverts Cursor to its
-        pre-cursor-byok settings.
+        {{ t('close.desc') }}
       </div>
       <label class="close-modal-remember">
         <input type="checkbox" v-model="rememberChoice" />
-        <span>Remember my choice</span>
+        <span>{{ t('close.remember') }}</span>
       </label>
       <div class="close-modal-actions">
         <button
@@ -69,14 +63,14 @@ defineExpose({ resetState });
           :disabled="closeBusy"
           @click="pickClose('quit')"
         >
-          Quit
+          {{ t('close.quit') }}
         </button>
         <button
           class="btn btn-primary"
           :disabled="closeBusy"
           @click="pickClose('tray')"
         >
-          Minimize to tray
+          {{ t('close.tray') }}
         </button>
       </div>
     </div>

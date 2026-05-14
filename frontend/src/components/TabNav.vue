@@ -19,27 +19,27 @@ const emit = defineEmits<{
       :class="['tab', currentView === 'overview' ? 'tab-active' : '']"
       @click="emit('update:currentView', 'overview')"
     >
-      总览
+      {{ t('tab.overview') }}
     </button>
     <button
       :class="['tab', currentView === 'models' ? 'tab-active' : '']"
       @click="emit('update:currentView', 'models')"
     >
-      模型 <span class="tab-count">{{ modelCount }}</span>
+      {{ t('tab.models') }} <span class="tab-count">{{ modelCount }}</span>
     </button>
     <button
       :class="['tab', currentView === 'stats' ? 'tab-active' : '']"
       @click="emit('update:currentView', 'stats')"
     >
-      统计
+      {{ t('tab.stats') }}
     </button>
     <span class="tab-spacer"></span>
     <button
       class="link-btn"
       @click="emit('refresh')"
-      title="从后端重新加载状态"
+      :title="t('footer.refreshState')"
     >
-      <span class="icn">↻</span> Refresh
+      <span class="icn">↻</span> {{ t('footer.refreshState') }}
     </button>
   </nav>
 </template>

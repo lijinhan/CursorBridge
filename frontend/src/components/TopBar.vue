@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Window, Browser } from "@wailsio/runtime";
 import { useProxyStore } from "../stores/proxy";
+import { t } from "../i18n";
 
 const store = useProxyStore();
 
@@ -15,7 +16,7 @@ function winHide() {
 }
 function openRepo() {
   Browser.OpenURL(GITHUB_URL).catch((e: any) => {
-    alert(`无法打开浏览器: ${e?.message ?? String(e)}`);
+    alert(t('footer.cannotOpenBrowser', { error: e?.message ?? String(e) }));
   });
 }
 </script>
@@ -40,22 +41,22 @@ function openRepo() {
         </svg>
       </div>
       <div>
-        <div class="brand-name">cursor-byok</div>
-        <div class="brand-sub">本地 MITM · BYOK 网关</div>
+        <div class="brand-name">{{ t('brand.name') }}</div>
+        <div class="brand-sub">{{ t('brand.sub') }}</div>
       </div>
     </div>
 
     <div class="topbar-right">
       <div :class="['status-pill', store.state.running ? 'pill-on' : 'pill-off']">
         <span class="dot"></span>
-        {{ store.state.running ? `运行中 · ${store.state.listenAddr}` : "已停止" }}
+        {{ store.state.running ? `${t('status.running')} · ${store.state.listenAddr}` : t('status.stopped') }}
       </div>
       <button
         :class="['btn', store.state.running ? 'btn-ghost' : 'btn-primary']"
         :disabled="store.busy"
         @click="store.toggleService"
       >
-        {{ store.state.running ? "停止" : "启动服务" }}
+        {{ store.state.running ? t('btn.stop') : t('btn.start') }}
       </button>
 
       <div class="win-controls">
