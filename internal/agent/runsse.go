@@ -111,6 +111,7 @@ type AdapterOpts struct {
 	MaxLoopRounds      int
 	MaxTurnDurationSec int
 	ToolExecTimeoutSec int
+	ContextTokenLimit  int
 }
 
 func AdapterTargetFromRelay(a relay.AdapterInfo) AdapterTarget {
@@ -132,6 +133,7 @@ func AdapterTargetFromRelay(a relay.AdapterInfo) AdapterTarget {
 			MaxLoopRounds:      a.MaxLoopRounds,
 			MaxTurnDurationSec: a.MaxTurnDurationSec,
 			ToolExecTimeoutSec: a.ToolExecTimeoutSec,
+			ContextTokenLimit:  a.ContextTokenLimit,
 		},
 	}
 }

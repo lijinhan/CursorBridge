@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	// 默认上下文窗口大小（字符数估算），当未从模型配置获取时使用
-	defaultContextCharBudget = 180000
+	// 默认上下文窗口大小（token数），当未从模型配置获取时使用
+	defaultContextTokenLimit = 128000
 
 	// 保留的最近轮次数，这些轮次不会被压缩
 	defaultRecentTurnsToKeep = 4
@@ -160,10 +160,66 @@ func mergeSummaryWithExisting(existingSummary, newSummary string) string {
 	return existingSummary + "\n\n[Earlier context summary]:\n" + newSummary
 }
 
-// getModelContextTokenLimit 从adapter选项或默认值获取模型上下文窗口大小
-// TODO: 当AdapterOpts添加ContextTokenLimit字段后，优先使用配置值
-func getModelContextTokenLimit(opts AdapterOpts) int {
-	return defaultContextCharBudget * 2 / 5 // 默认约72000 tokens
+// modelTokenDefaults lists known context window sizes (in tokens) for popular models.
+// Keys are lowercase model ID prefixes for case-insensitive matching.
+var modelTokenDefaults = map[string]int{
+	// OpenAI
+	"gpt-4o":            128000,
+	"gpt-4-turbo":       128000,
+	"gpt-4-0":           8192,
+	"gpt-4-32k":         32768,
+	"gpt-3.5-turbo":     16385,
+	"o1":                200000,
+	"o3":                200000,
+	"o4-mini":           200000,
+	// Anthropic
+	"claude-sonnet-4":   200000,
+	"claude-opus-4":     200000,
+	"claude-haiku-4":    200000,
+	"claude-3.5-sonnet": 200000,
+	"claude-3.5-haiku":  200000,
+	"claude-3-opus":     200000,
+	"claude-3-haiku":    200000,
+	// Google
+	"gemini-2.5-pro":    1048576,
+	"gemini-2.5-flash":  1048576,
+	"gemini-2.0-flash":  1048576,
+	"gemini-1.5-pro":    2097152,
+	"gemini-1.5-flash":  1048576,
+	// DeepSeek
+	"deepseek-chat":     131072,
+	"deepseek-reasoner": 131072,
+	// Mistral
+	"mistral-large":     131072,
+	"mistral-medium":    32768,
+	"mistral-small":     32768,
+	"codestral":         32768,
+}
+
+// getModelContextTokenLimit returns the context window token limit for the given adapter.
+// Priority: 1) explicit ContextTokenLimit config, 2) known model defaults, 3) fallback.
+func getModelContextTokenLimit(opts AdapterOpts, model string) int {
+	if opts.ContextTokenLimit > 0 {
+		return opts.ContextTokenLimit
+	}
+	if limit := lookupModelTokenLimit(model); limit > 0 {
+		return limit
+	}
+	return defaultContextTokenLimit
+}
+
+// lookupModelTokenLimit searches the known model defaults table for a matching model ID.
+func lookupModelTokenLimit(modelID string) int {
+	if modelID == "" {
+		return 0
+	}
+	lower := strings.ToLower(modelID)
+	for prefix, limit := range modelTokenDefaults {
+		if strings.HasPrefix(lower, prefix) {
+			return limit
+		}
+	}
+	return 0
 }
 
 // isContextOverflowError 检测provider返回的错误是否为上下文溢出

@@ -323,7 +323,7 @@ func runCompaction(
 			recentKeep = 1
 		}
 	}
-	maxTokens := getModelContextTokenLimit(setup.adapterOpts)
+	maxTokens := getModelContextTokenLimit(setup.adapterOpts, setup.model)
 	summary, keptTurns, compactErr := compactTurns(ctx, hist, recentKeep, maxTokens, setup.stream, setup.baseURL, setup.apiKey, setup.model, setup.adapterOpts)
 
 	compState.mu.Lock()
