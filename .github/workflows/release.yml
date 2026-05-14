@@ -18,7 +18,7 @@ env:
   NODE_VERSION: "20"
   # Pin the Wails v3 alpha we depend on so CI matches go.mod
   WAILS_VERSION: "v3.0.0-alpha.74"
-  APP_NAME: cursor-byok
+  APP_NAME: CursorBridge
 
 jobs:
   # ──────────────────────────────────────────────────────────────────────────
