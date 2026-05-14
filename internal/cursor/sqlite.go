@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"cursorbridge/internal/safefile"
 
@@ -132,6 +133,8 @@ func InjectFakeProUser(backupPath string) error {
 // JSON sidecar produced by InjectFakeProUser and removes it on success.
 // A nil entry in the sidecar means the key didn't exist before — we delete
 // it rather than recreate empty.
+// On Windows, retries up to 3 times with a delay to handle cases where
+// Cursor still holds the SQLite file lock.
 func RestoreFakeProUser(backupPath string) error {
 	if backupPath == "" {
 		return nil
@@ -154,7 +157,32 @@ func RestoreFakeProUser(backupPath string) error {
 	if _, err := os.Stat(dbPath); err != nil {
 		return nil
 	}
-	db, err := sql.Open("sqlite", dbPath+"?_pragma=busy_timeout=2000")
+
+	// On Windows, remove read-only attribute before opening the database.
+	if runtime.GOOS == "windows" {
+		removeReadOnly(dbPath)
+	}
+
+	var restoreErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		restoreErr = doRestore(dbPath, backup)
+		if restoreErr == nil {
+			_ = os.Remove(backupPath)
+			return nil
+		}
+		// If the error is a readonly/lock issue, wait and retry.
+		if isReadonlyError(restoreErr) && attempt < 2 {
+			time.Sleep(time.Duration(attempt+1) * 2 * time.Second)
+			continue
+		}
+		break
+	}
+	return restoreErr
+}
+
+// doRestore performs the actual SQLite restore operation.
+func doRestore(dbPath string, backup map[string]*string) error {
+	db, err := sql.Open("sqlite", dbPath+"?_pragma=busy_timeout=5000&_pragma=journal_mode=WAL")
 	if err != nil {
 		return err
 	}
@@ -182,8 +210,47 @@ func RestoreFakeProUser(backupPath string) error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit restore transaction: %w", err)
 	}
-	_ = os.Remove(backupPath)
 	return nil
+}
+
+// isReadonlyError checks if the error is a SQLite readonly/lock error.
+func isReadonlyError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return contains(msg, "readonly database") ||
+		contains(msg, "database is locked") ||
+		contains(msg, "SQLITE_READONLY") ||
+		contains(msg, "SQLITE_BUSY")
+}
+
+func contains(s, sub string) bool {
+	return len(s) >= len(sub) && (s == sub || len(sub) == 0 ||
+		(len(s) > 0 && len(sub) > 0 && findSubstring(s, sub)))
+}
+
+func findSubstring(s, sub string) bool {
+	for i := 0; i <= len(s)-len(sub); i++ {
+		if s[i:i+len(sub)] == sub {
+			return true
+		}
+	}
+	return false
+}
+
+// removeReadOnly clears the read-only file attribute on Windows.
+func removeReadOnly(path string) {
+	if runtime.GOOS != "windows" {
+		return
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	if info.Mode()&0o200 == 0 {
+		_ = os.Chmod(path, 0o666)
+	}
 }
 
 // ForceModelSelection rewrites Cursor's locally cached model preferences so
