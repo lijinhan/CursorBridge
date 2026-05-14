@@ -167,10 +167,28 @@ export const useProxyStore = defineStore("proxy", () => {
     state.value.lastError = undefined;
   }
 
+  const usageSummary = computed(() => ({
+    total: stats.value.totalTokens,
+    prompt: stats.value.totalPromptTokens,
+    completion: stats.value.totalCompletionTokens,
+    conversations: stats.value.conversationCount,
+    turns: stats.value.turnCount,
+  }));
+  const usageByModel = computed(() =>
+    stats.value.perModel.map((m) => ({
+      model: m.model,
+      provider: m.provider,
+      prompt: m.promptTokens,
+      completion: m.completionTokens,
+      total: m.promptTokens + m.completionTokens,
+      turns: m.turnCount,
+    })),
+  );
+
   return {
     state, cfg, tweaks, busy, caBusy, providerTab, stats, statsLoading,
     filteredAdapters, openAICount, anthropicCount, modelOptions, shortFP,
-    allTweaksOn, maxDailyTotal,
+    allTweaksOn, maxDailyTotal, usageSummary, usageByModel,
     refresh, loadStats, toggleService, persistConfig, toggleCAInstall,
     applyTweaks, revertTweaks, testAdapter, testAll, duplicate, removeAdapter,
     clearError,
