@@ -32,6 +32,7 @@ type AdapterInfo struct {
 	MaxLoopRounds      int
 	MaxTurnDurationSec int
 	ToolExecTimeoutSec int
+	ContextTokenLimit  int
 }
 
 // StableID returns a 16-char hex identifier derived from the provider model

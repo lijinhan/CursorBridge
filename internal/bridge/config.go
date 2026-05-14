@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"cursorbridge/internal/relay"
@@ -65,6 +66,7 @@ func adapterListFromConfig(c UserConfig) []relay.AdapterInfo {
 			MaxLoopRounds:      c.MaxLoopRounds,
 			MaxTurnDurationSec: maxTurnDurationSec,
 			ToolExecTimeoutSec: c.ToolExecTimeoutSec,
+			ContextTokenLimit:  parseContextWindow(a.ContextWindow),
 		})
 	}
 	return prioritizeActiveAdapter(out, strings.TrimSpace(c.ActiveModelID))
@@ -157,4 +159,24 @@ func (s *ProxyService) OpenSettingsFolder() error {
 		cmd = exec.Command("xdg-open", path)
 	}
 	return cmd.Start()
+}
+
+// parseContextWindow parses the contextWindow string field into a token limit.
+// Accepts formats like "128k", "128000", "200K". Returns 0 for empty/invalid.
+func parseContextWindow(s string) int {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0
+	}
+	multiplier := 1
+	lower := strings.ToLower(s)
+	if strings.HasSuffix(lower, "k") {
+		multiplier = 1024
+		s = s[:len(s)-1]
+	}
+	v, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil {
+		return 0
+	}
+	return v * multiplier
 }
