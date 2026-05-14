@@ -7,7 +7,9 @@ import (
 )
 
 // defaultRetryCount is used when the adapter's RetryCount is 0 (unset).
-const defaultRetryCount = 0
+// 2 retries is a reasonable default for production: it handles transient
+// failures (429 rate-limit, 502/503 gateway errors) without excessive delay.
+const defaultRetryCount = 2
 
 // defaultRetryIntervalMs is used when the adapter's RetryIntervalMs is 0 (unset).
 const defaultRetryIntervalMs = 1000
