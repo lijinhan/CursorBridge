@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultListenAddr = "127.0.0.1:18080"
+	defaultProxyPort = 18080
 	defaultUpstream   = "https://api2.cursor.sh"
 )
 
@@ -67,7 +67,7 @@ func NewProxyService() (*ProxyService, error) {
 		ca:      ca,
 		gateway: gw,
 		state: ProxyState{
-			ListenAddr:    defaultListenAddr,
+			ListenAddr:    fmt.Sprintf("127.0.0.1:%d", defaultProxyPort),
 			BaseURL:       baseURL,
 			CAFingerprint: ca.Fingerprint(),
 			CAPath:        filepath.Join(ca.Dir(), "ca.crt"),
@@ -103,9 +103,13 @@ func (s *ProxyService) StartProxy() (ProxyState, error) {
 	if s.state.Running {
 		return s.state, nil
 	}
-	_, _ = readConfig(s.cfgDir)
-	s.state.ListenAddr = defaultListenAddr
-	listen := defaultListenAddr
+	cfg, _ := readConfig(s.cfgDir)
+	port := defaultProxyPort
+	if cfg.ProxyPort > 0 && cfg.ProxyPort <= 65535 {
+		port = cfg.ProxyPort
+	}
+	listenAddr := fmt.Sprintf("127.0.0.1:%d", port)
+	s.state.ListenAddr = listenAddr
 	resolver := agent.AdapterResolverFunc(func() []agent.AdapterTarget {
 		ads := s.gatewayAdapters()
 		out := make([]agent.AdapterTarget, 0, len(ads))
@@ -115,7 +119,7 @@ func (s *ProxyService) StartProxy() (ProxyState, error) {
 		return out
 	})
 	selectedModel := func(purpose string) string { return selectedModelFor(s.cfgDir, purpose) }
-	srv, err := mitm.New(listen, s.ca, s.gateway, resolver, selectedModel)
+	srv, err := mitm.New(listenAddr, s.ca, s.gateway, resolver, selectedModel)
 	if err != nil {
 		s.state.LastError = err.Error()
 		return s.state, err
