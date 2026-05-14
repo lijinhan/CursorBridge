@@ -100,6 +100,8 @@ type UserConfig struct {
 	// to tray?" dialog. Empty = never answered, show the dialog on close.
 	// "quit" = shut the proxy down and exit. "tray" = hide to system tray.
 	CloseAction string `json:"closeAction,omitempty"`
+	// ProxyPort is the local port for the MITM proxy. 0 = use default (18080).
+	ProxyPort int `json:"proxyPort,omitempty"`
 	// MaxLoopRounds caps the agent tool-call loop rounds. 0 = no cap (native
 	// Cursor behaviour — the client controls when to stop). A positive value
 	// limits each agentic turn to that many LLM round-trips.

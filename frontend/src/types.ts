@@ -36,6 +36,7 @@ export type UserConfig = {
   activeModelID?: string;
   commitModelID?: string;
   reviewModelID?: string;
+  proxyPort?: number;
   maxLoopRounds?: number;
   maxTurnDurationMin?: number;
 };
