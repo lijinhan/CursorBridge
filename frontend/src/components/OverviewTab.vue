@@ -51,67 +51,6 @@ function openRepo() {
   });
 }
 
-function parseVersion(tag: string): [number, number, number] {
-  const cleaned = tag.trim().replace(/^v/i, "").split(/[-+]/)[0] ?? "";
-  const parts = cleaned.split(".").map((p: string) => parseInt(p, 10));
-  return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
-}
-
-function isNewer(remote: string, local: string): boolean {
-  const r = parseVersion(remote);
-  const l = parseVersion(local);
-  for (let i = 0; i < 3; i++) {
-    if (r[i] > l[i]) return true;
-    if (r[i] < l[i]) return false;
-  }
-  return false;
-}
-
-async function checkForUpdates() {
-  if (updateBusy.value) return;
-  updateBusy.value = true;
-  try {
-    const resp = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
-      { headers: { Accept: "application/vnd.github+json" } },
-    );
-    if (resp.status === 404) {
-      alert(`No releases published yet.\nYou are running v${APP_VERSION}.`);
-      return;
-    }
-    if (!resp.ok) {
-      throw new Error(`GitHub returned HTTP ${resp.status}`);
-    }
-    const data = (await resp.json()) as {
-      tag_name?: string;
-      name?: string;
-      html_url?: string;
-    };
-    const tag = data.tag_name ?? "";
-    const htmlURL = data.html_url ?? `${GITHUB_URL}/releases/latest`;
-    if (!tag) {
-      alert(`You are running v${APP_VERSION}. Could not read latest tag.`);
-      return;
-    }
-    if (isNewer(tag, APP_VERSION)) {
-      const open = confirm(
-        `A new version is available.\n\nInstalled: v${APP_VERSION}\nLatest: ${tag}\n\nOpen the release page in your browser?`,
-      );
-      if (open) {
-        Browser.OpenURL(htmlURL).catch((e: any) => {
-          alert(`Could not open browser: ${e?.message ?? String(e)}`);
-        });
-      }
-    } else {
-      alert(`You are on the latest version (v${APP_VERSION}).`);
-    }
-  } catch (e: any) {
-    alert(`Update check failed: ${e?.message ?? String(e)}`);
-  } finally {
-    updateBusy.value = false;
-  }
-}
-
 const emit = defineEmits<{
   (e: "openEditor", index: number): void;
 }>();
@@ -315,11 +254,41 @@ const emit = defineEmits<{
       <button class="link-btn" @click="openRepo">GitHub</button>
       <button
         class="link-btn"
-        @click="checkForUpdates"
-        :disabled="updateBusy"
+        @click="store.checkForUpdates()"
+        :disabled="store.updateState.checking"
       >
-        {{ updateBusy ? "Checking…" : "Check for updates" }}
+        {{ store.updateState.checking ? "Checking…" : "Check for updates" }}
       </button>
+    </div>
+
+    <!-- Update notification banner -->
+    <div v-if="store.updateState.available && store.updateState.info && !store.updateState.installing" class="update-banner">
+      <div class="update-info">
+        <span class="update-icon">↑</span>
+        <span>New version available: <b>{{ store.updateState.info.latestTag }}</b></span>
+        <span class="update-current">(current: {{ store.updateState.info.currentTag }})</span>
+      </div>
+      <div class="update-actions">
+        <template v-if="!store.updateState.downloading && !store.updateState.progress?.percent">
+          <button class="btn btn-primary btn-sm" @click="store.downloadUpdate()">Download</button>
+          <button class="btn btn-ghost btn-sm" @click="store.dismissUpdate()">Dismiss</button>
+        </template>
+        <template v-else-if="store.updateState.downloading || (store.updateState.progress && store.updateState.progress.percent < 100)">
+          <div class="update-progress">
+            <div class="update-progress-bar" :style="{ width: store.updateState.progress?.percent + '%' }" />
+          </div>
+          <span class="update-progress-text">{{ store.updateState.progress?.percent ?? 0 }}%</span>
+        </template>
+        <template v-else>
+          <button class="btn btn-primary btn-sm" @click="store.installUpdate()">Install &amp; Restart</button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Update error -->
+    <div v-if="store.updateState.error" class="update-error">
+      {{ store.updateState.error }}
+      <button class="error-dismiss" @click="store.dismissUpdate()" title="Dismiss">✕</button>
     </div>
   </div>
 </template>
@@ -402,5 +371,66 @@ const emit = defineEmits<{
 }
 .footer-spacer {
   flex: 1;
+}
+
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #93c5fd;
+}
+.update-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.update-icon {
+  font-size: 14px;
+  font-weight: 700;
+}
+.update-current {
+  color: #71717a;
+}
+.update-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.update-progress {
+  width: 120px;
+  height: 6px;
+  background: #1f1f22;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.update-progress-bar {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.update-progress-text {
+  font-size: 11px;
+  color: #71717a;
+  min-width: 32px;
+}
+.update-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #f87171;
 }
 </style>

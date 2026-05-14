@@ -68,8 +68,15 @@ const zhCN: TranslationMap = {
   "close.remember": "Remember my choice",
 
   // Footer
-  "footer.checkUpdates": "Check for updates",
-  "footer.checking": "Checking…",
+  "footer.checkUpdates": "检查更新",
+  "footer.checking": "正在检查…",
+
+  // Update
+  "update.available": "有新版本可用",
+  "update.download": "下载",
+  "update.dismiss": "忽略",
+  "update.installRestart": "安装并重启",
+  "update.current": "当前版本",
 
   // Help tooltips (Chinese)
   "help.cacheHit": "从上游缓存而非模型直接返回的请求比例。",
